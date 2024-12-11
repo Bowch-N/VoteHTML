@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vote on Reliability</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f9;
+    }
+
+    h1 {
+      margin-top: 20px;
+      color: #333;
+    }
+
+    #voting-buttons {
+      margin-top: 20px;
+    }
+
+    button {
+      font-size: 18px;
+      padding: 10px 20px;
+      margin: 10px;
+      cursor: pointer;
+      border: none;
+      border-radius: 5px;
+      color: white;
+    }
+
+    .yes-button {
+      background-color: #FE6406;
+    }
+
+    .no-button {
+      background-color: #262626;
+    }
+
+    .clear-button {
+      background-color: #808080;
+    }
+
+    #chart-container {
+      margin-top: 30px;
+      max-width: 500px;
+      margin: 30px auto;
+    }
+
+    #download-btn {
+      margin-top: 20px;
+      padding: 10px 15px;
+      font-size: 16px;
+      background-color: #FE6406;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    #download-btn:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+<body>
+  <h1>How reliable do you think this information is?</h1>
+  <div id="voting-buttons">
+    <button class="yes-button" onclick="vote('yes')">Yes</button>
+    <button class="no-button" onclick="vote('no')">No</button>
+    <button class="clear-button" onclick="clearResults()">Clear Results</button>
+  </div>
+  <div id="chart-container">
+    <canvas id="resultsChart"></canvas>
+  </div>
+  <button id="download-btn" onclick="downloadChart()">Download Chart</button>
+
+  <script>
+    // Initialize votes from localStorage or set defaults
+    let votes = JSON.parse(localStorage.getItem('votes')) || { yes: 0, no: 0 };
+
+    // Initialize Chart.js
+    const ctx = document.getElementById('resultsChart').getContext('2d');
+    const chart = new Chart(ctx, {
+      type: 'pie',
+      data: {
+        labels: ['Yes', 'No'],
+        datasets: [{
+          data: [votes.yes, votes.no],
+          backgroundColor: ['#FE6406', '#262626'],
+          borderWidth: 1,
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            position: 'bottom',
+          },
+          datalabels: {
+            formatter: (value, ctx) => {
+              const total = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+              const percentage = total ? ((value / total) * 100).toFixed(1) + '%' : '0%';
+              return percentage;
+            },
+            color: '#fff',
+          },
+        },
+      },
+      plugins: [ChartDataLabels],
+    });
+
+    // Handle voting
+    function vote(choice) {
+      if (choice === 'yes') {
+        votes.yes++;
+      } else if (choice === 'no') {
+        votes.no++;
+      }
+      updateChart();
+    }
+
+    // Clear results
+    function clearResults() {
+      votes = { yes: 0, no: 0 };
+      updateChart();
+    }
+
+    // Update chart and save to localStorage
+    function updateChart() {
+      chart.data.datasets[0].data = [votes.yes, votes.no];
+      chart.update();
+      localStorage.setItem('votes', JSON.stringify(votes));
+    }
+
+    // Download the chart as an image
+    function downloadChart() {
+      const link = document.createElement('a');
+      link.download = 'vote_results.png';
+      link.href = chart.toBase64Image();
+      link.click();
+    }
+  </script>
+</body>
+</html>
